@@ -1,0 +1,17 @@
+## Build & Artifacts
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+.vs/
+.idea/
+.vscode/
+
+## Publish outputs
+publish/
+
+## Logs & Temp
+*.log
+*.tmp

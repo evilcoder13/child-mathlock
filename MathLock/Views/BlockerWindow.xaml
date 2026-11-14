@@ -1,0 +1,16 @@
+<Window x:Class="MathLock.Views.BlockerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MathLock Screen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="#0F172A">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="🔒 MathLock Active" FontSize="36" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center"/>
+            <TextBlock Text="Please solve the math challenges on the primary screen!" FontSize="20" Foreground="#475569" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
