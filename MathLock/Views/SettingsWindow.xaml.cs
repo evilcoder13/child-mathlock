@@ -24,6 +24,8 @@ public partial class SettingsWindow : Window
         SliderQuestions.Value = _settings.RequiredQuestions;
         SliderTimer.Value = _settings.SecondsPerQuestion;
         ChkSound.IsChecked = _settings.PlaySounds;
+        ChkPeriodicLock.IsChecked = _settings.EnablePeriodicLock;
+        SliderInterval.Value = _settings.PeriodicIntervalMinutes;
     }
 
     private void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -32,6 +34,8 @@ public partial class SettingsWindow : Window
         _settings.RequiredQuestions = (int)SliderQuestions.Value;
         _settings.SecondsPerQuestion = (int)SliderTimer.Value;
         _settings.PlaySounds = ChkSound.IsChecked ?? true;
+        _settings.EnablePeriodicLock = ChkPeriodicLock.IsChecked ?? true;
+        _settings.PeriodicIntervalMinutes = (int)SliderInterval.Value;
 
         if (!string.IsNullOrEmpty(TxtNewPin.Password))
         {
@@ -69,21 +73,29 @@ public partial class SettingsWindow : Window
 
     private void BtnRegisterTask_Click(object sender, RoutedEventArgs e)
     {
-        string? exePath = Process.GetCurrentProcess().MainModule?.FileName;
+        string? exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
         if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
         {
             TxtTaskStatus.Text = "Could not locate executable path.";
             return;
         }
 
-        bool ok = TaskSchedulerService.RegisterTriggers(exePath);
-        TxtTaskStatus.Text = ok ? "Auto-lock triggers successfully registered!" : "Failed to register triggers. Please run as Administrator.";
+        // 1. Enable HKCU Run startup (Tray mode: handles logon, unlock, and 30-min intervals)
+        bool startupOk = StartupService.SetStartup(true, exePath);
+
+        // 2. Also try registering Task Scheduler if admin
+        TaskSchedulerService.RegisterTriggers(exePath);
+
+        TxtTaskStatus.Text = startupOk
+            ? "Auto-Start and 30-min periodic triggers successfully configured!"
+            : "Failed to configure registry startup.";
     }
 
     private void BtnUnregisterTask_Click(object sender, RoutedEventArgs e)
     {
-        bool ok = TaskSchedulerService.UnregisterTriggers();
-        TxtTaskStatus.Text = ok ? "Auto-lock triggers removed." : "Failed to remove triggers.";
+        StartupService.SetStartup(false);
+        TaskSchedulerService.UnregisterTriggers();
+        TxtTaskStatus.Text = "Auto-lock triggers removed.";
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e)

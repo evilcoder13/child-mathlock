@@ -51,10 +51,13 @@ public partial class LockWindow : Window
     // Secret corner tap tracker (5 taps within 3 seconds)
     private readonly List<DateTime> _cornerTapTimes = new();
 
-    public LockWindow(AppSettings settings)
+    private readonly bool _closeOnlyOnUnlock;
+
+    public LockWindow(AppSettings settings, bool closeOnlyOnUnlock = false)
     {
         InitializeComponent();
         _settings = settings;
+        _closeOnlyOnUnlock = closeOnlyOnUnlock;
         _targetCount = settings.RequiredQuestions;
         _totalSecondsPerQuestion = settings.SecondsPerQuestion;
         _generator = new QuestionGenerator();
@@ -326,7 +329,14 @@ public partial class LockWindow : Window
         {
             exitTimer.Stop();
             CleanupAndExit();
-            Application.Current.Shutdown();
+            if (_closeOnlyOnUnlock)
+            {
+                Close();
+            }
+            else
+            {
+                Application.Current.Shutdown();
+            }
         };
         exitTimer.Start();
     }
@@ -353,7 +363,14 @@ public partial class LockWindow : Window
                 // Parent override successful
                 _solvedCount = _targetCount; // Allow window closing
                 CleanupAndExit();
-                Application.Current.Shutdown();
+                if (_closeOnlyOnUnlock)
+                {
+                    Close();
+                }
+                else
+                {
+                    Application.Current.Shutdown();
+                }
             }
             else
             {

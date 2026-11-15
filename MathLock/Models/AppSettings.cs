@@ -19,6 +19,9 @@ public class AppSettings
     public bool PlaySounds { get; set; } = true;
     public bool AutoStartWithWindows { get; set; } = true;
 
+    public int PeriodicIntervalMinutes { get; set; } = 30; // Auto-lock every 30 minutes
+    public bool EnablePeriodicLock { get; set; } = true;
+
     public static string ComputeSha256(string raw)
     {
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(raw));

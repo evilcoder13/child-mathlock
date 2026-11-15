@@ -65,6 +65,7 @@ From the Settings window, you can:
   - **Grade 4–5**: Multi-digit arithmetic and multiplication/division up to 12×12.
 - Adjust the number of required questions (`3`–`25`, default `10`).
 - Adjust the per-question anti-calculator timer (`5`–`30` seconds, default `12s`).
+- Enable/disable periodic auto-lock and configure interval (`5`–`120` minutes, default **`30 minutes`**).
 - Change the Parent Override PIN.
 - Enable or disable Windows Logon & Unlock auto-triggers.
 
@@ -76,32 +77,20 @@ From the Settings window, you can:
 | :--- | :--- |
 | *(none)* or `--lock` | Launches the fullscreen MathLock challenge immediately. |
 | `--settings` | Opens the Parent Configuration window. |
-| `--tray` | Runs silently in the background and listens to Windows `SessionSwitch` events (`SessionLogon` and `SessionUnlock`) to pop up the lock screen automatically. |
+| `--tray` | Runs silently in the background, enforces lock on user logon, listens to Windows `SessionSwitch` events (`SessionUnlock`), and runs the periodic 30-minute lock timer. |
 
 ---
 
-## 🔄 Automatic Trigger on Windows Logon & Unlock
+## 🔄 Automatic Trigger on Windows Logon, Unlock & Every 30 Minutes
 
-### Option A: Via the PowerShell Installer Script (Recommended)
-1. Publish a release executable:
-   ```powershell
-   dotnet publish MathLock/MathLock.csproj -c Release -r win-x64 --self-contained false
-   ```
-2. Run the installer script in an **Administrator PowerShell** terminal:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\MathLock\install-task.ps1
-   ```
-   This registers two Windows Scheduled Tasks:
-   - `MathLock_AutoLock_Logon` (triggers at user logon)
-   - `MathLock_AutoLock_Unlock` (triggers on workstation unlock, state change `8`)
+MathLock installs into `%LocalAppData%\Programs\MathLock` and registers with Windows Auto-Start (`HKCU\...\Run`) with `--tray`:
+1. **At Windows Logon**: Starts automatically in the background and activates the math challenge immediately.
+2. **At Workstation Unlock**: Listens to Windows `SessionUnlock` events and locks the screen.
+3. **Every 30 Minutes**: Triggers the 10 math challenges automatically while the computer is being used. The timer resets each time the child finishes solving the math.
 
-3. To remove the scheduled tasks at any time:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\MathLock\install-task.ps1 -Uninstall
-   ```
-
-### Option B: Via the Settings GUI
-Run `MathLock.exe --settings` as Administrator and click **"Enable Auto-Lock on Logon & Unlock"**.
+To toggle or reconfigure:
+- Open **Start Menu** -> search for **MathLock Settings**
+- Or run `MathLock.exe --settings`
 
 ---
 
