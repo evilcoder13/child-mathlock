@@ -79,7 +79,13 @@ public partial class LockWindow : Window
 
         Loaded += LockWindow_Loaded;
         Closing += LockWindow_Closing;
+        Closed += LockWindow_Closed;
         Deactivated += LockWindow_Deactivated;
+    }
+
+    private void LockWindow_Closed(object? sender, EventArgs e)
+    {
+        Logger.Log($"LockWindow Closed event fired. Solved={_solvedCount}/{_targetCount}");
     }
 
     private void LockWindow_Loaded(object sender, RoutedEventArgs e)
@@ -143,10 +149,12 @@ public partial class LockWindow : Window
 
     private void LockWindow_Closing(object? sender, CancelEventArgs e)
     {
+        Logger.Log($"LockWindow_Closing invoked. Solved={_solvedCount}/{_targetCount}");
         // Prevent closing unless math solved or parent unlocked
         if (_solvedCount < _targetCount)
         {
             e.Cancel = true;
+            Logger.Log("LockWindow_Closing cancelled because math not solved.");
         }
         else
         {

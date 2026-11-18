@@ -14,12 +14,23 @@ public partial class App : System.Windows.Application
     private AppSettings? _settings;
     private DispatcherTimer? _periodicLockTimer;
     private LockWindow? _activeLockWindow;
+    private SessionNotificationListener? _wtsListener;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
+        AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
+        {
+            Logger.Log($"UnhandledException: {ev.ExceptionObject}");
+        };
+        DispatcherUnhandledException += (s, ev) =>
+        {
+            Logger.Log($"DispatcherUnhandledException: {ev.Exception}");
+        };
+
         // Load configuration
+        Logger.Log($"OnStartup args: {string.Join(" ", e.Args)}");
         _settings = SettingsService.Load();
 
         // Parse CLI arguments
@@ -69,14 +80,34 @@ public partial class App : System.Windows.Application
 
     private void StartBackgroundListener()
     {
+        Logger.Log("StartBackgroundListener entered");
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         // Automatically trigger lock on startup/login
         TriggerLock();
 
-        // Listen to Windows Session Switch (Logon / Unlock)
+        // Register direct Win32 WTS session notification for robust Unlock/Logon detection
+        try
+        {
+            _wtsListener = new SessionNotificationListener();
+            _wtsListener.SessionChanged += (reason) =>
+            {
+                if (reason == SessionNotificationListener.WTS_SESSION_UNLOCK ||
+                    reason == SessionNotificationListener.WTS_SESSION_LOGON)
+                {
+                    Dispatcher.Invoke(TriggerLock);
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Error creating SessionNotificationListener: {ex}");
+        }
+
+        // Also listen via Microsoft.Win32.SystemEvents as fallback
         SystemEvents.SessionSwitch += (s, ev) =>
         {
+            Logger.Log($"SessionSwitch event received: {ev.Reason}");
             if (ev.Reason == SessionSwitchReason.SessionUnlock ||
                 ev.Reason == SessionSwitchReason.SessionLogon)
             {
@@ -86,6 +117,7 @@ public partial class App : System.Windows.Application
 
         // Setup periodic timer (default: every 30 minutes)
         SetupPeriodicTimer();
+        Logger.Log("StartBackgroundListener finished setup");
     }
 
     public void SetupPeriodicTimer()
@@ -127,7 +159,9 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Logger.Log($"OnExit code: {e.ApplicationExitCode}");
         _periodicLockTimer?.Stop();
+        _wtsListener?.Dispose();
         _singleInstanceMutex?.Dispose();
         base.OnExit(e);
     }
